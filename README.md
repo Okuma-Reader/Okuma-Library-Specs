@@ -1,4 +1,4 @@
-# Okuma-Library
+# Okuma-Library Specifications
 
 The Okuma-Library is where the titles (series/books/manga...) are stored. Its stucture uses the Okuma-Library Directory Structure. This folder mush be accessible online in order to use it with an instance of Okuma-Reader. It isn't necessary to enable files and directory listing on your web server.
 
