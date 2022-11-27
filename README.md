@@ -1,4 +1,4 @@
-# Okuma-Library Specifications
+# Okuma-Library
 
 The Okuma-Library is where the titles (series/books/manga...) are stored. Its stucture uses the Okuma-Library Directory Structure. This folder mush be accessible online in order to use it with an instance of Okuma-Reader. It isn't necessary to enable files and directory listing on your web server.
 
@@ -48,6 +48,11 @@ Here is an overview of said directory structure:
      └─ ...
 ```
 
+## General notes
+
+- The root folder can be named however you prefer. In this document we have choosen the name "library".
+- The properties in the JSON files can have a default value (see the different tables bellow). If that's the case, the property can be omited completely. When the JSON file will be read, the value of a missing property will be its default one. That also means that any property that doesn't have a default value is required, or else the JSON file will be considered invalid.
+
 ## First level: Library folder
 
 ```
@@ -59,7 +64,7 @@ Here is an overview of said directory structure:
 
 The first layer is composed of folders, one for each "title". The folders are names using a [slug](https://en.wikipedia.org/wiki/Clean_URL#Slug). A slug must only contain lowercase letters, numbers, and dashes. For example, a book titled "_My Awesome Book Series_" could use a slug like "my-awesome-book-series". Because the slug will be used as part of the URL, it's recommended to keep it concise. Furthermore, a slug needs to be unique.
 
-Beside the folders, there is also a `index.json` file:
+Beside the folders, there is also a `index.json` file which follow the [LibraryIndex](#libraryindex) type:
 
 ```json
 {
@@ -68,8 +73,12 @@ Beside the folders, there is also a `index.json` file:
 }
 ```
 
-- `version` is the version of the index.json file. Currently the version is `2.0`.
-- `titles` is the list of all the slugs present at this level.
+### LibraryIndex
+
+| Property |     Type     | Default | Description                                                         |
+| -------- | :----------: | :-----: | ------------------------------------------------------------------- |
+| version  |    string    |         | The version of the index.json file. Currently the version is `2.0`. |
+| titles   | string array |         | The list of all the titles' slug present in the library.            |
 
 ## Second level: Title folder
 
@@ -78,12 +87,17 @@ Beside the folders, there is also a `index.json` file:
 
 📁 my-awesome-book-series
  ├─ index.json
+ ├─ thumbnail.jpg
  ├─ 📁 volume-1-welcome
  ├─ 📁 volume-2-the-void
  └─ 📁 volume-3-whatever
 ```
 
-Inside each _Title folder_, there are _Volume folders_. Every title has at least one volume. The volumes are stored in individual folder, which are named using the volume's slug. There is also a `index.json` file that stored information about the title:
+Inside each _Title folder_, there are _Volume folders_. Every title has at least one volume. The volumes are stored in individual folder, which are named using the volume's slug.
+
+There is an optional `thumbnail.jpg` file which can be used as the thumbnail for the title/series. If missing, the first volume's thumbnail will be used instead. This file must always be a `.jpg` file as the image is also used as the thumbnail for the [Open Graph protocol](https://ogp.me/) (the preview you get when sharing the URL on social media or messaging apps).
+
+Finally, there is a `index.json` which follow the [TitleIndex](#titleindex) type:
 
 ```json
 {
@@ -91,44 +105,59 @@ Inside each _Title folder_, there are _Volume folders_. Every title has at least
   "pretitle": "An Okuma production",
   "title": "My awesome Book Series",
   "subtitle": "The complete trilogy",
+  "volumes": ["volume-1-welcome", "volume-2-the-void", "volume-3-whatever"],
   "status": "completed",
-  "published": {
-    "startDate": "1982-06-12",
-    "endDate": "1990-11-06"
-  },
   "synopsis": "A brief outline or general view, as of a subject or written work; an abstract or a summary...",
   "tags": ["Action", "Sci-Fi"],
+  "serialization": "Publishing Company Name",
   "credits": [
     { "name": "John Smith", "role": "story" },
     { "name": "Ben Smith", "role": "illustation" }
   ],
-  "serialization": "Publishing Company Name",
   "links": [
     { "title": "Official website", "url": "https://some-website.com" },
     { "title": "Amazon UK", "url": "https://amazon.co.uk/something" }
-  ],
-  "volumes": ["volume-1-welcome", "volume-2-the-void", "volume-3-whatever"]
+  ]
 }
 ```
 
-- `version` is the version of the index.json file. Currently the version is `2.0`.
-- `pretitle` (optional) is a piece of text placed before the title.
-- `title` is the displayed name for that title. Unlike the slug, it can be any string you want.
-- `subtitle` (optional) is a piece of text placed after the title.
-- `status` (optional) is the current status of the title. The available values are `completed`, `ongoing`, and `cancelled`.
-- `published` (optional) gives information about when the title began and ended publication.
-  - `startDate` is the date the publication started. The format is YYYY-MM-DD.
-  - `endDate` (optional) is the date the publication ended. The format is YYYY-MM-DD.
-- `synopsis` is the relatively short summary of the book. It can use HTML tags such as \<br> or \<strong> ...
-- `tags` is a list of genres/tags to quickly understand what the title is about.
-- `credits` (optional) is a list of people involved in the production of this title.
-  - `name` is the name of the person.
-  - `role` is the role of the person.
-- `serialization` (optional) is a name of the publishing company.
-- `links` (optional) is a list of links related to the title.
-  - `title` is the name of the link.
-  - `url` is the url of the link.
-- `volumes` is the list of the volumes' slugs.
+### TitleIndex
+
+| Property      |            Type             | Default | Description                                                                        |
+| ------------- | :-------------------------: | :-----: | ---------------------------------------------------------------------------------- |
+| version       |           string            |         | The version of the index.json file. Currently the version is `2.0`.                |
+| pretitle      |           string            |   ""    | A piece of text placed before the title.                                           |
+| title         |           string            |         | The displayed name for that title. Unlike the slug, it can be any string you want. |
+| subtitle      |           string            |   ""    | A piece of text placed after the title.                                            |
+| volumes       |        string array         |         | The list of the volumes' slugs.                                                    |
+| status        | [TitleStatus](#titlestatus) |   ""    | The current status of the title.                                                   |
+| synopsis      |           string            |   ""    | The relatively short summary of the book.                                          |
+| tags          |        string array         |   []    | A list of genres/tags to quickly understand what the title is about.               |
+| serialization |           string            |   ""    | The name of the publishing company.                                                |
+| credits       |   [Credit](#credit) array   |   []    | A list of people involved in the production of this title.                         |
+| links         |     [Link](#link) array     |   []    | A list of links related to the title.                                              |
+
+### TitleStatus
+
+TitleStatus is a string which value is `upcoming`, `ongoing`, `completed`, or `cancelled`.
+
+### Credit
+
+Credit is an object with the following properties:
+
+| Property |  Type  | Default | Description             |
+| -------- | :----: | :-----: | ----------------------- |
+| name     | string |         | The name of the person. |
+| role     | string |         | The role of the person. |
+
+### Link
+
+Link is an object with the following properties:
+
+| Property |  Type  | Default | Description            |
+| -------- | :----: | :-----: | ---------------------- |
+| title    | string |         | The title of the link. |
+| url      | string |         | The url of the link.   |
 
 ## Third level: Volume folder
 
@@ -145,13 +174,17 @@ Inside each _Title folder_, there are _Volume folders_. Every title has at least
 
 A _Volume folder_ contains 3 image folders: `small`, `medium`, and `large`. Those correspond to different set of the same images, but with different resolution and quality settings. The `small` images are used in the gallery view, where the user see a preview of all the pages in a volume. The `medium` and `large` options are shown in the reader (depending on which quality the user as selected).
 
-Alongside the image folders, there is one file `thumbnail.jpg` which is used has the thumbnail for the volume (and the thumbnail of the first volume is used as the series' thumbnail). This file must always be a `.jpg` file as the image is also used as the thumbnail of Open Graph preview (the preview you get when sharing the URL on social media or messaging apps).
+Alongside the image folders, there is one file `thumbnail.jpg` which is used has the thumbnail for the volume. For the same reason as the thumbnail in the volume folder, this file must be a `.jpg` file.
 
-Finally there is a `index.json`:
+Finally there is a `index.json` which follow the [VolumeIndex](#volumeindex) type:
 
 ```json
 {
   "version": "2.0",
+  "pretitle": "Volume 1",
+  "title": "Welcome",
+  "subtitle": "",
+  "publicationDate": "2022-06-21",
   "type": "manga",
   "fileExtension": ".webp",
   "pageCount": 104,
@@ -173,18 +206,30 @@ Finally there is a `index.json`:
 }
 ```
 
-- `version` is the version of the index.json file. Currently the version is `2.0`.
-- `type` is the type of the volume. Currently available types are: `manga`, `book`, `imageset`, and `webtoon`. See the table bellow for more information about the different types.
-- `pageCount` is the number of pages/images in this volume.
-- `pageOrder` (optional, default: `left to right`) controls whether the pages are arranged from `left to right` or `right to left`. Most Japanese books are meant to be read from right to left contrary to western books. This parameter is disgarded if the volume `type` is `imageset` or `webtoon`.
-- `numberingStart` (optional, default: 1) is the page number of the first normal page in the volume. This parameter is disgarded if the volume `type` is `imageset` or `webtoon`.
-- `languages` (optional) is the list of languages present in the volume. The format is the [IETF BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tag format.
-- `bookmarks` (optional) are used to organize a volume, just like bookmarks in a PDF file.
-  - `type` is the type of the bookmark. Only the value `chapter` is supported.
-  - `name` (optional) is the name of the bookmark. If omited, chapter are displayed as "Chapter X", where X is incremented for each chapter.
-  - `page` is the starting page of the bookmark.
+### `VolumeIndex`
 
-### Volume types
+| Property        |            Type             |     Default     | Description                                                                                                                        |
+| --------------- | :-------------------------: | :-------------: | ---------------------------------------------------------------------------------------------------------------------------------- |
+| version         |           string            |                 | The version of the index.json file. Currently the version is `2.0`.                                                                |
+| pretitle        |           string            |       ""        | A piece of text placed before the title.                                                                                           |
+| title           |           string            |                 | The displayed name for that volume. Unlike the slug, it can be any string you want.                                                |
+| subtitle        |           string            |       ""        | A piece of text placed after the title.                                                                                            |
+| publicationDate |        [Date](#date)        |       ""        | The publication date for this volume. The format is YYYY-MM-DD.                                                                    |
+| type            |  [VolumeType](#volumetype)  |                 | The type of the volume. See the table bellow for more information about the different types.                                       |
+| pageCount       |           number            |                 | The number of pages/images in this volume.                                                                                         |
+| pageOrder       |   [PageOrder](#pageorder)   | `left to right` | Controls the page order: `left to right` or `right to left`. This parameter is disgarded for volume types `imageset` or `webtoon`. |
+| numberingStart  |           number            |        1        | The page number of the first normal page in the volume. This parameter is disgarded for volume types `imageset` and `webtoon`.     |
+| languages       | [Language](#language) array |       []        | The list of languages present in the volume.                                                                                       |
+| bookmarks       | [Bookmark](#bookmark) array |       []        | Used to organize a volume, just like bookmarks in a PDF file.                                                                      |
+
+### Date
+
+Date is a string formatted as YYYY-MM-DD.
+
+### VolumeType
+
+VolumeType is a string which value is either `manga`, `book`, `imageset`, or `webtoon`.
+Here's a comparaison between the different volume types:
 
 | Volume type | Available filters | Special images | Single-page | Double-page | Vertical scrolling |
 | ----------- | ----------------- | -------------- | :---------: | :---------: | :----------------: |
@@ -194,6 +239,28 @@ Finally there is a `index.json`:
 | webtoon     | Only drop shadow  | Only thumbnail |     ✔️      |     ❌      |         ✔️         |
 
 The difference between `manga` and `book` is purely visual. Manga have a rougher texture and the side pages also look different from a typical book.
+
+### PageOrder
+
+PageOrder is a string which value is either `left to right` or `right to left`.
+
+### Language
+
+Language is a string following the [IETF BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tag format (i.e: `fr-CA`, `en-US`, ...).
+
+### Bookmark
+
+Bookmark is an object with the following properties:
+
+| Property |             Type              | Default | Description                                                                                                         |
+| -------- | :---------------------------: | :-----: | ------------------------------------------------------------------------------------------------------------------- |
+| type     | [BookmarkType](#bookmarktype) |         | The type of the bookmark. Only the value `chapter` is supported.                                                    |
+| name     |            string             |   ""    | The name of the bookmark. If omited, chapter are displayed as "Chapter X", where X is incremented for each chapter. |
+| page     |            number             |         | The starting page of the bookmark.                                                                                  |
+
+### `BookmarkType`
+
+BookmarkType is a string which value is `chapter`.
 
 ## Fourth level: Image folder
 
@@ -221,7 +288,16 @@ It also contains a very simple `index.json` file:
 }
 ```
 
-- `fileExtension` is the image file format used for this image set. All images in the folder must use the same file extension. The fileExtension value must include the dot at the beginning.
+### `ImageIndex`
+
+| Property      |              Type               | Default | Description                                                                                               |
+| ------------- | :-----------------------------: | :-----: | --------------------------------------------------------------------------------------------------------- |
+| version       |             string              |         | The version of the index.json file. Currently the version is `2.0`.                                       |
+| fileExtension | [FileExtension](#fileextension) |         | The image file format used for this image set. All images in the folder must use the same file extension. |
+
+### `FileExtension`
+
+BookmarkType is a string which starts with a dot (i.e: `.jpg`, `.webp`, `.png`, ...)
 
 ### Normal pages
 
